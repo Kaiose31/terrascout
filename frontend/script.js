@@ -43,3 +43,5 @@ map.on(L.Draw.Event.CREATED, function (event) {
     selectAreaBtn.disabled = false;
     selectAreaBtn.classList.add('active');
 });
+
+
