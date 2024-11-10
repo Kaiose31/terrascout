@@ -23,7 +23,7 @@ def downloadtaxon(taxon_ids: List[int]):
             all_results.append(result)
         time.sleep(1)
 
-    with open("data/taxon.json", "w") as f:
+    with open("data/taxon_large.json", "w") as f:
         json.dump(all_results, f, indent=4)
 
 
@@ -31,7 +31,7 @@ def convert(df):
 
     df = df.fillna("", axis=1)
     db = df.to_dict(orient="records")
-    with open("data/obs_small.json", "w") as f:
+    with open("data/obs_large.json", "w") as f:
         json.dump(db, f, indent=4)
 
 
@@ -48,9 +48,9 @@ def download(df: pd.DataFrame):
 
 if __name__ == "__main__":
     df = pd.read_csv("data/observation_large.csv")
-    # df = df.groupby("iconic_taxon_name").head(100)
-    # df.to_csv("data/obs_small.csv")
+    df = df.groupby("iconic_taxon_name").head(200)
+    df.to_csv("data/obs_small.csv")
 
     # convert(df)
 
-    downloadtaxon(df["taxon_id"].unique().tolist())
+    # downloadtaxon(df["taxon_id"].unique().tolist())

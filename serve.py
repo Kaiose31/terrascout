@@ -7,21 +7,21 @@ import torchvision.models as models
 from torchvision.transforms import transforms
 from PIL import Image
 import tensorflow as tf
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+import keras
 import pickle
 from sklearn.preprocessing import LabelEncoder
 
-#Pipeline 1
+# Pipeline 1
 model = models.mobilenet_v2(pretrained=False)
 model.classifier[1] = nn.Linear(model.classifier[1].in_features, 4)
-model.load_state_dict(torch.load("data/mobilenetft.pth"))
+model.load_state_dict(torch.load("data/models/mobilenetft.pth"))
 model.eval()
 
-#Pipeline 2 
-plant= tf.keras.models.load_model('data/Plant_model.h5')
-insect= tf.keras.models.load_model('data/Insect_model.h5')
-bird= tf.keras.models.load_model('data/Bird_model.h5')
-mammal= tf.keras.models.load_model('data/Mammal_model.h5')
+# Pipeline 2
+# plant = tf.keras.models.load_model("data/models/Plant_model.h5")
+# insect = tf.keras.models.load_model("data/models/Insect_model.h5")
+# bird = tf.keras.models.load_model("data/models/Bird_model.h5")
+mammal = tf.keras.models.load_model("data/models/Mammal_model.h5")
 
 app = Flask(__name__)
 
@@ -32,7 +32,7 @@ categories = {0: "Plantae", 1: "Insecta", 2: "Aves", 3: "Mammalia"}
 def inference():
     data = request.files["image"].stream
     image = Image.open(data).convert("RGB")
-    image2=image
+    image2 = image
     preprocess = transforms.Compose(
         [
             transforms.Resize(256),
@@ -44,13 +44,14 @@ def inference():
     image = preprocess(image)
     image = image.unsqueeze(0)
 
-    def preprocess_image(image):
-        img = img.resize((224, 224))  # Resize to 224x224
+    def preprocess_image(img):
+        img = img.resize((300, 300))  # Resize to 224x224
         img_array = np.array(img)  # Convert to a NumPy array
         img_array = img_array / 255.0  # Normalize to [0, 1]
         img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
         return img_array
-    image2 = preprocess_image(image2)
+
+    image_tf = preprocess_image(image2)
 
     if torch.cuda.is_available():
         image = image.to("cuda")
@@ -62,33 +63,33 @@ def inference():
 
     prob, cat = torch.topk(probabilities, 1)
 
-    output_data = (prob.tolist()[0], cat.tolist()[0])       
-    
-    if output_data[1] == 0:
-        # Run plant model
-        with open('Plant_encoder.pkl', 'rb') as f:
-            label_encoder = pickle.load(f)
-        model2=plant
+    output_data = (prob.tolist()[0], cat.tolist()[0])
 
-    elif output_data[1] == 1:
-        # Run insect model
-        with open('Insect_encoder.pkl', 'rb') as f:
-            label_encoder = pickle.load(f)
-        model2=insect
+    # if output_data[1] == 0:
+    #     # Run plant model
+    #     with open("Plant_encoder.pkl", "rb") as f:
+    #         label_encoder = pickle.load(f)
+    #     model2 = plant
 
-    elif output_data[1] == 2:
-        # Run Aves(bird) model
-        with open('Bird_encoder.pkl', 'rb') as f:
-            label_encoder = pickle.load(f)
-        model2=bird
+    # elif output_data[1] == 1:
+    #     # Run insect model
+    #     with open("Insect_encoder.pkl", "rb") as f:
+    #         label_encoder = pickle.load(f)
+    #     model2 = insect
 
-    else:
-        # Run Mammamal model
-        with open('Mammal_encoder.pkl', 'rb') as f:
-            label_encoder = pickle.load(f)
-        model2=mammal
+    # elif output_data[1] == 2:
+    #     # Run Aves(bird) model
+    #     with open("Bird_encoder.pkl", "rb") as f:
+    #         label_encoder = pickle.load(f)
+    #     model2 = bird
 
-    predictions = model2.predict(image)
+    # else:
+    # Run Mammamal model
+    with open("data/models/Mammal_encoder.pkl", "rb") as f:
+        label_encoder = pickle.load(f)
+    model2 = mammal
+
+    predictions = model2.predict(image_tf)
     predicted_class_idx = np.argmax(predictions, axis=1)
     predicted_label = label_encoder.inverse_transform(predicted_class_idx)
 
