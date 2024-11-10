@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Photo from Webcam</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* Custom styling for video and canvas */
+        #video {
+            width: 100%;
+            max-width: 320px;
+            border: 2px solid #000;
+            margin-bottom: 20px;
+        }
+
+        #canvas {
+            display: block;
+            margin-top: 20px;
+            max-width: 320px;
+            border: 2px solid #000;
+            margin-bottom: 20px;
+        }
+
+        #capture-button {
+            background-color: #000000;
+            /* Black background */
+            color: #ffffff;
+            /* White text */
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            opacity: 0.5;
+        }
+
+        #capture-button.active {
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .container {
+            padding-top: 20px;
+        }
+
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ccc;
+        }
+
+        .webcam-container,
+        .photo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .webcam-container {
+            flex: 1;
+            padding: 10px;
+        }
+
+        .photo-container {
+            flex: 1;
+            padding: 10px;
+        }
+
+        /* Make the layout responsive */
+        @media (max-width: 768px) {
+
+            .webcam-container,
+            .photo-container {
+                flex: 0 0 100%;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Green bar with heading "Terrascout" -->
+    <nav class="navbar navbar-custom navbar-expand-lg navbar-dark" style="background-color: #28a745;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">Terrascout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="my-4 text-center">Capture Photo from Webcam</h1>
+
+        <div class="row">
+            <!-- Webcam Section -->
+            <div class="col-md-6 webcam-container">
+                <video id="video" autoplay></video>
+            </div>
+
+            <!-- Snapped Photo Section -->
+            <div class="col-md-6 photo-container">
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Button to capture the photo -->
+        <div class="text-center">
+            <button id="capture-button" disabled>Capture Photo</button>
+        </div>
+
+        <!-- Div to display the server response -->
+        <div id="response" class="text-center"></div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <!-- Accessing the webcam -->
+    <script>
+        // Get references to the elements
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture-button');
+        const ctx = canvasElement.getContext('2d');
+        const responseDiv = document.getElementById('response');
+
+        // Access the webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                // Set the video source to the webcam stream
+                videoElement.srcObject = stream;
+
+                // Enable the capture button once the webcam feed is ready
+                captureButton.disabled = false;
+            })
+            .catch(function (error) {
+                console.error('Error accessing webcam:', error);
+            });
+
+        // Capture photo when the button is clicked
+        captureButton.addEventListener('click', function () {
+            // Set canvas width and height to match the video element's size
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+
+            // Draw the current video frame onto the canvas
+            ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+            // Get the image data as base64 string (JPEG format)
+            const imageData = canvasElement.toDataURL('image/jpeg');
+
+            // Send the image data to the server
+            sendImageToServer(imageData);
+        });
+
+        // Function to send image to the server
+        function sendImageToServer(imageData) {
+            // Prepare the POST request
+            fetch('http://localhost:8080/match', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: imageData })
+            })
+                .then(response => response.json()) // Parse JSON response
+                .then(data => {
+                    // Display the JSON response on the screen
+                    responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                })
+                .catch(error => {
+                    console.error('Error sending image to server:', error);
+                    responseDiv.innerHTML = '<p class="text-danger">Error sending image to server.</p>';
+                });
+        }
+    </script>
+</body>
+
+</html>

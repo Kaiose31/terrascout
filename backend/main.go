@@ -3,12 +3,15 @@ package main
 import (
 	"backend/utils"
 	"backend/wildlife"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,10 +41,16 @@ func createDB() {
 
 }
 
+type ImageRequest struct {
+	Image string `json:"image"`
+}
+
 func setupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
+
+	r.Use(cors.Default()) // This allows all origins by default
 
 	//clear and reset db
 	r.GET("/refresh", func(ctx *gin.Context) {
@@ -50,41 +59,52 @@ func setupRouter() *gin.Engine {
 		ctx.JSON(http.StatusOK, gin.H{"records": len(db), "taxa": len(taxa)})
 	})
 
-	// r.GET("/map", func(c *gin.Context) {
-
-	// 	//Create bounding box
-	// 	coords, err := utils.ConvertStringsToFloats(strings.Split(c.Query("box"), ","))
-	// 	if err != nil {
-	// 		log.Fatal("Failed to parse box")
-	// 	}
-	// 	//filter db for given bounding box
-	// 	utils.FilterObservations(&db, coords[0], coords[1], coords[2], coords[3])
-
-	// 	c.String(http.StatusOK, "Filtered data according to bounding box")
-	// })
+	r.GET("/obs", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"data": db[:100]})
+	})
 
 	r.POST("/match", func(ctx *gin.Context) {
 
-		file, err := ctx.FormFile("image")
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "No file uploaded"})
+		var req ImageRequest
+
+		// Bind the JSON body to the ImageRequest struct
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 			return
 		}
 
-		imageFile, err := file.Open()
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to open the file"})
+		// Check if the "image" key is present
+		if req.Image == "" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "No image data found"})
 			return
 		}
 
-		defer imageFile.Close()
+		// Decode the base64 image string
+		// Remove the data URL scheme prefix (if it exists) to get the base64 string
+		base64Image := req.Image
+		base64Image = strings.TrimPrefix(base64Image, "data:image/jpeg;base64,")
 
-		imageData := make([]byte, file.Size)
-		_, err = imageFile.Read(imageData)
+		// Decode the base64 string into bytes
+		imageData, err := base64.StdEncoding.DecodeString(base64Image)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to read the file"})
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to decode base64 image"})
 			return
 		}
+
+		// imageFile, err := file.Open()
+		// if err != nil {
+		// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to open the file"})
+		// 	return
+		// }
+
+		// defer imageFile.Close()
+
+		// imageData := make([]byte, file.Size)
+		// _, err = imageFile.Read(imageData)
+		// if err != nil {
+		// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Unable to read the file"})
+		// 	return
+		// }
 
 		scientificName, err := utils.RunML(imageData)
 		if err != nil {
@@ -119,6 +139,7 @@ func setupRouter() *gin.Engine {
 func main() {
 	createDB()
 	r := setupRouter()
+
 	// Listen and Server in 0.0.0.0:8080
 	r.Run(":8080")
 }

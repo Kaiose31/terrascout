@@ -44,13 +44,13 @@ def download(df: pd.DataFrame):
         res = requests.get(url)
         with open(f"data/images/{id}.jpg", "wb") as f:
             f.write(res.content)
-
+        print(idx)
 
 if __name__ == "__main__":
     df = pd.read_csv("data/observation_large.csv")
     df = df.groupby("iconic_taxon_name").head(200)
     df.to_csv("data/obs_small.csv")
-
+    download(df)
     # convert(df)
 
     # downloadtaxon(df["taxon_id"].unique().tolist())
