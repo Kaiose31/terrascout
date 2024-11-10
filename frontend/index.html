@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenStreetMap Viewer</title>
+    <!-- Link to Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        /* Make the map fill the entire screen */
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Map container -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS library -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        // Given coordinates (Northwest and Southeast corners)
+
+        const northwest = [35.867185, -118.612568]; // Example: NW corner (latitude, longitude)
+        const southeast = [36.287875, -118.114577]; // Example: SE corner (latitude, longitude)
+        // Initialize the map and set the view to the center of the bounding box
+        const map = L.map('map', {
+            zoomControl: true, // Enable zoom controls
+            boxZoom: true,
+        });
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Define the bounds of the area using the provided northwest and southeast coordinates
+        const bounds = [[northwest[0], northwest[1]], [southeast[0], southeast[1]]];
+
+        // Set the map view to fit the given bounding box and adjust the zoom level automatically
+        map.fitBounds(bounds, {
+        });
+
+        // Optionally, add a rectangle to highlight the bounds on the map
+    </script>
+</body>
+
+</html>
