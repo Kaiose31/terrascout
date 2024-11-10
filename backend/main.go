@@ -55,6 +55,7 @@ func setupRouter() *gin.Engine {
 	//clear and reset db
 	r.GET("/refresh", func(ctx *gin.Context) {
 		db = nil
+		taxa = nil
 		createDB()
 		ctx.JSON(http.StatusOK, gin.H{"records": len(db), "taxa": len(taxa)})
 	})
@@ -112,11 +113,15 @@ func setupRouter() *gin.Engine {
 			return
 		}
 		fmt.Println(scientificName)
+		fmt.Println(len(db))
 		//find the Scientific name in the db
 		utils.FilterObsByName(&db, scientificName)
+		fmt.Println(len(db))
 
 		if len(db) == 0 {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not Identify Species"})
+			db = nil
+			createDB()
 			return
 		}
 		fmt.Println(db[0].TaxonID)
