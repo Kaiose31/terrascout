@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +16,7 @@ var db []wildlife.Observation
 var taxa []wildlife.Taxon
 
 func createDB() {
-	content, err := os.ReadFile("../data/obs.json")
+	content, err := os.ReadFile("../data/obs_large.json")
 	if err != nil {
 		log.Fatal("Failed to read observation data: ", err)
 	}
@@ -27,7 +26,7 @@ func createDB() {
 		log.Fatal("Error parsing json: ", err)
 	}
 
-	taxon, err := os.ReadFile("../data/taxon.json")
+	taxon, err := os.ReadFile("../data/taxon_large.json")
 	if err != nil {
 		log.Fatal("Failed to read observation data: ", err)
 	}
@@ -48,23 +47,22 @@ func setupRouter() *gin.Engine {
 	r.GET("/refresh", func(ctx *gin.Context) {
 		db = nil
 		createDB()
-		ctx.String(http.StatusOK, "refreshed db")
+		ctx.JSON(http.StatusOK, gin.H{"records": len(db), "taxa": len(taxa)})
 	})
 
-	r.GET("/map", func(c *gin.Context) {
+	// r.GET("/map", func(c *gin.Context) {
 
-		//Create bounding box
-		coords, err := utils.ConvertStringsToFloats(strings.Split(c.Query("box"), ","))
-		if err != nil {
-			log.Fatal("Failed to parse box")
-		}
-		//filter db for given bounding box
-		utils.FilterObservations(&db, coords[0], coords[1], coords[2], coords[3])
+	// 	//Create bounding box
+	// 	coords, err := utils.ConvertStringsToFloats(strings.Split(c.Query("box"), ","))
+	// 	if err != nil {
+	// 		log.Fatal("Failed to parse box")
+	// 	}
+	// 	//filter db for given bounding box
+	// 	utils.FilterObservations(&db, coords[0], coords[1], coords[2], coords[3])
 
-		c.String(http.StatusOK, "Filtered data according to bounding box")
-	})
+	// 	c.String(http.StatusOK, "Filtered data according to bounding box")
+	// })
 
-	//forward given image and possibly
 	r.POST("/match", func(ctx *gin.Context) {
 
 		file, err := ctx.FormFile("image")
@@ -101,12 +99,14 @@ func setupRouter() *gin.Engine {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not Identify Species"})
 			return
 		}
-
+		fmt.Println(db[0].TaxonID)
 		//fetch details
+
 		utils.FilterTaxon(&taxa, db[0].TaxonID)
 
 		if len(taxa) == 0 {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch Wiki"})
+			return
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{"obs": db[0], "wiki": taxa[0].WikipediaSummary})
@@ -117,7 +117,7 @@ func setupRouter() *gin.Engine {
 }
 
 func main() {
-	go createDB()
+	createDB()
 	r := setupRouter()
 	// Listen and Server in 0.0.0.0:8080
 	r.Run(":8080")

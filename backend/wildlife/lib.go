@@ -34,6 +34,6 @@ type Observation struct {
 }
 
 type Taxon struct {
-	TaxonID          int    `json:"taxon_od"`
+	TaxonID          int    `json:"id"`
 	WikipediaSummary string `json:"wikipedia_summary"`
 }

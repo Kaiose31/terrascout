@@ -55,7 +55,7 @@ func downloadAndSaveImage(imageData ImageData) {
 	rgbImg := convertToRGB(img)
 
 	// Create output file with id.jpg
-	outFile, err := os.Create(fmt.Sprintf("../../data/insect_img/%d.jpg", imageData.ID))
+	outFile, err := os.Create(fmt.Sprintf("../../data/plant_img/%d.jpg", imageData.ID))
 	if err != nil {
 		log.Printf("Error creating file for image %d: %v\n", imageData.ID, err)
 		return
@@ -74,7 +74,7 @@ func downloadAndSaveImage(imageData ImageData) {
 
 func main() {
 	// Open the data.json file
-	file, err := os.Open("Insecta.json")
+	file, err := os.Open("plantae.json")
 	if err != nil {
 		log.Fatalf("Error opening data.json file: %v\n", err)
 		return
