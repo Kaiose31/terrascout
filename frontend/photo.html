@@ -168,8 +168,21 @@
             })
                 .then(response => response.json()) // Parse JSON response
                 .then(data => {
-                    // Display the JSON response on the screen
-                    responseDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                    // Display the selected fields from the JSON response on the screen
+                    const { wiki } = data;
+                    const { obs } = data; // Extract the 'obs' object
+                    const { iconic_taxon_name, common_name, species_guess } = obs; // Destructure required fields
+                    // Create a new HTML structure to display the selected fields
+                    responseDiv.innerHTML = `
+                        <h5>Wiki:</h5>
+                        <p>${wiki}</p>
+                        <h5>Iconic Taxon Name:</h5>
+                        <p>${iconic_taxon_name}</p>
+                        <h5>Common Name:</h5>
+                        <p>${common_name}</p>
+                        <h5>Species Guess:</h5>
+                        <p>${species_guess}</p>
+                    `;
                 })
                 .catch(error => {
                     console.error('Error sending image to server:', error);

@@ -18,9 +18,9 @@ model.load_state_dict(torch.load("data/models/mobilenetft.pth"))
 model.eval()
 
 # Pipeline 2
-# plant = tf.keras.models.load_model("data/models/Plant_model.h5")
-# insect = tf.keras.models.load_model("data/models/Insect_model.h5")
-# bird = tf.keras.models.load_model("data/models/Bird_model.h5")
+plant = tf.keras.models.load_model("data/models/Plant_model.h5")
+insect = tf.keras.models.load_model("data/models/Insect_model.h5")
+bird = tf.keras.models.load_model("data/models/Bird_model.h5")
 mammal = tf.keras.models.load_model("data/models/Mammal_model.h5")
 
 app = Flask(__name__)
@@ -65,29 +65,29 @@ def inference():
 
     output_data = (prob.tolist()[0], cat.tolist()[0])
 
-    # if output_data[1] == 0:
-    #     # Run plant model
-    #     with open("Plant_encoder.pkl", "rb") as f:
-    #         label_encoder = pickle.load(f)
-    #     model2 = plant
+    if output_data[1] == 0:
+        # Run plant model
+        with open("data/models/Plant_encoder.pkl", "rb") as f:
+            label_encoder = pickle.load(f)
+        model2 = plant
 
-    # elif output_data[1] == 1:
-    #     # Run insect model
-    #     with open("Insect_encoder.pkl", "rb") as f:
-    #         label_encoder = pickle.load(f)
-    #     model2 = insect
+    if output_data[1] == 1:
+        # Run insect model
+        with open("data/models/Insect_encoder.pkl", "rb") as f:
+            label_encoder = pickle.load(f)
+        model2 = insect
 
-    # elif output_data[1] == 2:
-    #     # Run Aves(bird) model
-    #     with open("Bird_encoder.pkl", "rb") as f:
-    #         label_encoder = pickle.load(f)
-    #     model2 = bird
+    elif output_data[1] == 2:
+        # Run Aves(bird) model
+        with open("data/models/Bird_encoder.pkl", "rb") as f:
+            label_encoder = pickle.load(f)
+        model2 = bird
 
-    # else:
-    # Run Mammamal model
-    with open("data/models/Mammal_encoder.pkl", "rb") as f:
-        label_encoder = pickle.load(f)
-    model2 = mammal
+    else:
+        # Run Mammamal model
+        with open("data/models/Mammal_encoder.pkl", "rb") as f:
+            label_encoder = pickle.load(f)
+        model2 = mammal
 
     predictions = model2.predict(image_tf)
     predicted_class_idx = np.argmax(predictions, axis=1)
