@@ -14,7 +14,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 var drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 var selectAreaBtn = document.getElementById('select-area-btn');
-
+map.dragging.disable()
 // Configure Leaflet Draw
 var drawControl = new L.Control.Draw({
 
