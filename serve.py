@@ -8,16 +8,11 @@ from torchvision.transforms import transforms
 from PIL import Image
 
 
-LOAD = True
+model = models.mobilenet_v2(pretrained=False)
+model.classifier[1] = nn.Linear(model.classifier[1].in_features, 4)
+model.load_state_dict(torch.load("data/mobilenetft.pth"))
+model.eval()
 
-if LOAD:
-    model = models.mobilenet_v2(pretrained=False)
-    model.classifier[1] = nn.Linear(model.classifier[1].in_features, 4)
-    model.load_state_dict(torch.load("data/mobilenetft.pth"))
-    model.eval()
-else:
-    model = models.mobilenet_v2(pretrained=True)
-    model.eval()
 
 app = Flask(__name__)
 
