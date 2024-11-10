@@ -14,6 +14,7 @@ import (
 )
 
 var db []wildlife.Observation
+var taxa []wildlife.Taxon
 
 func createDB() {
 	content, err := os.ReadFile("../data/obs.json")
@@ -22,6 +23,16 @@ func createDB() {
 	}
 
 	err = json.Unmarshal(content, &db)
+	if err != nil {
+		log.Fatal("Error parsing json: ", err)
+	}
+
+	taxon, err := os.ReadFile("../data/taxon.json")
+	if err != nil {
+		log.Fatal("Failed to read observation data: ", err)
+	}
+
+	err = json.Unmarshal(taxon, &taxa)
 	if err != nil {
 		log.Fatal("Error parsing json: ", err)
 	}
@@ -50,7 +61,6 @@ func setupRouter() *gin.Engine {
 		//filter db for given bounding box
 		utils.FilterObservations(&db, coords[0], coords[1], coords[2], coords[3])
 
-		//fetch summary for taxon
 		c.String(http.StatusOK, "Filtered data according to bounding box")
 	})
 
@@ -78,14 +88,28 @@ func setupRouter() *gin.Engine {
 			return
 		}
 
-		result, err := utils.RunML(imageData)
+		scientificName, err := utils.RunML(imageData)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("ML processing failed: %v", err)})
 			return
 		}
+		fmt.Println(scientificName)
+		//find the Scientific name in the db
+		utils.FilterObsByName(&db, scientificName)
 
-		//send the data for the recognized species
-		ctx.JSON(http.StatusOK, gin.H{"result": result})
+		if len(db) == 0 {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not Identify Species"})
+			return
+		}
+
+		//fetch details
+		utils.FilterTaxon(&taxa, db[0].TaxonID)
+
+		if len(taxa) == 0 {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch Wiki"})
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"obs": db[0], "wiki": taxa[0].WikipediaSummary})
 
 	})
 

@@ -15,4 +15,19 @@ NE : 36.287875, -118.114577
 4. Model detects type (insect, plant, etc) and species and returns species name.
 
 
+## Running backend
+
+```
+cd backend
+go run main.go
+```
+
+##Serve ML Model
+```
+python3 serve.py
+```
+
+
+
+
 

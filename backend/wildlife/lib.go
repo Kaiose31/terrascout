@@ -32,3 +32,8 @@ type Observation struct {
 	IconicTaxonName          string      `json:"iconic_taxon_name"`
 	TaxonID                  int         `json:"taxon_id"`
 }
+
+type Taxon struct {
+	TaxonID          int    `json:"taxon_od"`
+	WikipediaSummary string `json:"wikipedia_summary"`
+}

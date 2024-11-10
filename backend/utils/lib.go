@@ -2,7 +2,11 @@ package utils
 
 import (
 	"backend/wildlife"
+	"bytes"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"strconv"
 )
 
@@ -34,20 +38,64 @@ func FilterObservations(observations *[]wildlife.Observation, swle, swlo, nele, 
 	*observations = obs[:n]
 }
 
-// func FilterObservations2(observations []wildlife.Observation, swle, nele, swlo, nwlo float64) []wildlife.Observation {
-// 	var filtered []wildlife.Observation
+func FilterObsByName(observations *[]wildlife.Observation, scientificName string) {
+	obs := *observations
+	n := 0
 
-// 	for _, obs := range observations {
-// 		if obs.Latitude > swle && obs.Latitude < nele && obs.Longitude > swlo && obs.Longitude < nwlo {
-// 			filtered = append(filtered, obs)
-// 		}
-// 	}
+	for i := 0; i < len(obs); i++ {
+		if obs[i].ScientificName == scientificName {
+			obs[n] = obs[i]
+			n++
+		}
+	}
 
-// 	return filtered
-// }
+	*observations = obs[:n]
+}
 
 func RunML(imageData []byte) (string, error) {
 
-	result := "species, iconic taxon name"
-	return result, nil
+	var requestBody bytes.Buffer
+
+	writer := multipart.NewWriter(&requestBody)
+
+	part, err := writer.CreateFormFile("image", "image.jpg")
+	if err != nil {
+		return "", fmt.Errorf("failed to create form file: %v", err)
+	}
+
+	_, err = io.Copy(part, bytes.NewReader(imageData))
+	if err != nil {
+		return "", fmt.Errorf("failed to write image data: %v", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return "", fmt.Errorf("failed to close writer: %v", err)
+	}
+	resp, err := http.Post("http://127.0.0.1:5001/inference", writer.FormDataContentType(), &requestBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to send post request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response: %v", err)
+	}
+
+	return string(body), nil
+}
+
+func FilterTaxon(taxa *[]wildlife.Taxon, taxon_id int) {
+	obs := *taxa
+	n := 0
+
+	for i := 0; i < len(obs); i++ {
+		if obs[i].TaxonID == taxon_id {
+			obs[n] = obs[i]
+			n++
+		}
+	}
+
+	*taxa = obs[:n]
 }
