@@ -83,11 +83,13 @@ def inference():
             label_encoder = pickle.load(f)
         model2 = bird
 
-    else:
+    elif output_data[1] == 3:
         # Run Mammamal model
         with open("data/models/Mammal_encoder.pkl", "rb") as f:
             label_encoder = pickle.load(f)
         model2 = mammal
+    else:
+        return "error"
 
     predictions = model2.predict(image_tf)
     predicted_class_idx = np.argmax(predictions, axis=1)
